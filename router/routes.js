@@ -14,24 +14,21 @@ router.get("/", (req,res) => {
 });
 
 
-router.post("/", (req,res) => {
+router.post("/", async(req,res) => {
     const body = req.body;
-    let todo = [];
-     fs.readFile("data.json", "utf-8", (err  ,data) => { // this function is asynchronous
-        if(!err && data){
-            todo = JSON.parse(data);
-        }
-
-        const newTodo = {id : todo.length, todo : body.todo };
+    try{
+        const data = await fs.promises.readFile("data.json", "utf-8");
+       let todo = data ? JSON.parse(data) : [];
+        const newTodo = {id : todo.length, todo : body.todo }
         todo.push(newTodo);
+        await fs.promises.writeFile("data.json", JSON.stringify(todo , null , 2));
 
-        fs.writeFile("data.json", JSON.stringify(todo , null , 2) , (err) => {
-           if(err) {
-           return res.status(500).json({status : 500 , message : "Internal Server Error"});
-           }
-           return res.status(201).json({status : 201 , message : "Created Successfully"});
-       })
-    });
+        res.status(201).json({status: 201 , message : "todo created"});
+    }
+    catch(err){
+        console.log(err)
+        res.status(404).json({status : 404 , message : "File Not Found!"});
+    }
 })
 
 
